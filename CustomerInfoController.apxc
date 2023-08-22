@@ -1,0 +1,84 @@
+public without sharing class CustomerInfoController {
+    public String firstName { get; set; }
+    public String lastName { get; set; }
+    public String phone { get; set; }
+    public String email { get; set; }
+    public String website { get; set; }
+    public String language { get; set; }
+    public List<CustomerWrapper> createdCustomers { get; set; }
+
+    public CustomerInfoController() {
+        createdCustomers = new List<CustomerWrapper>();
+    }
+
+    public void createAccountAndContact() {
+        // Validate phone and email here
+        if (phone.length() != 10) {
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR, 'Phone number should be of 10 digits.'));
+            return;
+        }
+
+        Account acc = new Account(
+            Name = firstName + ' ' + lastName,
+            Phone = phone,
+            Website = website,
+            Language__c = language // Make sure this field exists on Account
+        );
+        insert acc;
+
+        Contact con = new Contact(
+            AccountId = acc.Id,
+            FirstName = firstName,
+            LastName = lastName,
+            Phone = phone,
+            Email = email
+        );
+        insert con;
+
+        createdCustomers.add(new CustomerWrapper(acc, con));
+
+        // Clear input fields
+        firstName = '';
+        lastName = '';
+        phone = '';
+        email = '';
+        website = '';
+        language = '';
+    }
+
+    public void validateEmail() {
+        if (!Pattern.matches('[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}', email)) {
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR, 'Invalid email format.'));
+        }
+    }
+
+    public class CustomerWrapper {
+        public Account Account { get; private set; }
+        public Contact Contact { get; private set; }
+
+        public CustomerWrapper(Account acc, Contact con) {
+            Account = acc;
+            Contact = con;
+        }
+
+        public String getName() {
+            return Account.Name;
+        }
+
+        public String getPhone() {
+            return Account.Phone;
+        }
+
+        public String getEmail() {
+            return Contact.Email;
+        }
+
+        public String getWebsite() {
+            return Account.Website;
+        }
+
+        public String getLanguage() {
+            return Account.Language__c;
+        }
+    }
+}
